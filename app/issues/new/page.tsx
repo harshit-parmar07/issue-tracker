@@ -14,10 +14,12 @@ import Spinner from '@/app/components/Spinner';
 
 type IssueForm = z.infer<typeof createIssueSchema>;
 
+
 const NewIssuePage = () => {
   const router = useRouter();
   const [error, setError] = useState('');
   const [isSubmitting, setSubmitting] = useState(false)
+
   const {
     register,
     control,
@@ -26,6 +28,18 @@ const NewIssuePage = () => {
   } = useForm<IssueForm>({
     resolver: zodResolver(createIssueSchema)
   });
+
+  const onSubmit = handleSubmit(async (data) => {
+    try {
+      setSubmitting(true)
+      await axios.post('/api/issues', data);
+      router.push('/issues');
+    } catch (error) {
+      setSubmitting(false)
+      setError('An unexpected error occured');
+    }
+  })
+
   return (
     <div className="max-w-xl">
       {error && (
@@ -35,16 +49,7 @@ const NewIssuePage = () => {
       )}
       <form
         className="space-y-3"
-        onSubmit={handleSubmit(async (data) => {
-          try {
-            setSubmitting(true)
-            await axios.post('/api/issues', data);
-            router.push('/issues');
-          } catch (error) {
-            setSubmitting(false)
-            setError('An unexpected error occured');
-          }
-        })}
+        onSubmit={onSubmit}
       >
         <TextField.Root>
           <TextField.Input placeholder="Title" {...register('title')} />
@@ -59,10 +64,14 @@ const NewIssuePage = () => {
         />
         <ErrorMessage>{errors.description?.message}</ErrorMessage>
 
-        <Button disabled={isSubmitting}>Submit New request {isSubmitting && <Spinner/>}</Button>
+        <Button disabled={isSubmitting}>Submit New request {isSubmitting && <Spinner />}</Button>
       </form>
     </div>
   );
 };
 
 export default NewIssuePage;
+function handleSubmit(arg0: (data: any) => Promise<void>) {
+  throw new Error('Function not implemented.');
+}
+
