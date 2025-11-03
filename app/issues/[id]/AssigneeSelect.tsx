@@ -4,6 +4,7 @@ import { Select } from "@radix-ui/themes";
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from '@/app/components';
 import axios from 'axios';
+import toast, { Toaster } from 'react-hot-toast'
 
 const AssigneeSelect = ({ issue }: { issue: Issue }) => {
     const { data: users, error, isLoading } = useQuery<User[]>({
@@ -20,29 +21,34 @@ const AssigneeSelect = ({ issue }: { issue: Issue }) => {
     const initial = issue.assignedToUserId ? String(issue.assignedToUserId) : "";
 
     return (
-        <Select.Root
-            defaultValue={initial}
-            onValueChange={async (userId) => {
-                axios.patch(`/api/issues/${issue.id}`, {
-                    assignedToUserId: userId || null
-                });
-            }}
-        >
-            <Select.Trigger />
-            <Select.Content>
-                <Select.Group>
-                    <Select.Label>Suggestions</Select.Label>
-                    <Select.Item value="">
-                        Unassigned
-                    </Select.Item>
-                    {users?.map((user) => (
-                        <Select.Item key={user.id} value={String(user.id)}>
-                            {user.name}
+        <>
+            <Select.Root
+                defaultValue={initial}
+                onValueChange={async (userId) => {
+                    axios.patch(`/api/issues/${issue.id}`, {
+                        assignedToUserId: userId || null
+                    }).catch(() => {
+                        toast.error('Changes could not be saved');
+                    });
+                }}
+            >
+                <Select.Trigger />
+                <Select.Content>
+                    <Select.Group>
+                        <Select.Label>Suggestions</Select.Label>
+                        <Select.Item value="">
+                            Unassigned
                         </Select.Item>
-                    ))}
-                </Select.Group>
-            </Select.Content>
-        </Select.Root>
+                        {users?.map((user) => (
+                            <Select.Item key={user.id} value={String(user.id)}>
+                                {user.name}
+                            </Select.Item>
+                        ))}
+                    </Select.Group>
+                </Select.Content>
+            </Select.Root>
+            <Toaster />
+        </>
     );
 };
 
