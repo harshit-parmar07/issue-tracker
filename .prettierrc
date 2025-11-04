@@ -1,5 +1,7 @@
 {
   "singleQuote": true,
   "trailingComma": "none",
-  "editor.defaultFormatter": "esbenp.pritter-vscode"
+  "editor.defaultFormatter": "esbenp.pritter-vscode",
+  "printWidth": 60,
+  "proseWrap": "preserve"
 }
