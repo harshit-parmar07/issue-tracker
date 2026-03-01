@@ -1,34 +1,84 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Issue Tracker - Project Management Dashboard
 
-## Getting Started
+![Live Demo](https://img.shields.io/badge/Live_Demo-Available-success?style=for-the-badge&logo=vercel)
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 
-First, run the development server:
+**Live Application:** [issue-tracker-six-black.vercel.app](https://issue-tracker-six-black.vercel.app/)
 
+## 🚀 Overview
+
+Issue Tracker is a full-stack, comprehensive bug and task management application designed to streamline project workflows. Built from the ground up using the latest Next.js App Router, it provides a clean, interactive dashboard for creating, assigning, and monitoring software issues. The application features a robust relational database schema, secure user authentication, and enterprise-grade error monitoring.
+
+## ✨ Key Features
+
+* **Complete Issue Lifecycle:** Create, read, update, and delete (CRUD) issues. Track issue status (Open, In Progress, Closed).
+* **User Assignment:** Seamlessly assign tasks to specific users within the system.
+* **Interactive Dashboard:** Visualize current project metrics and issue statuses at a glance with graphical data representations.
+* **Markdown Support:** Rich text editing and rendering for comprehensive issue descriptions.
+* **Data Validation:** Strict end-to-end type safety and schema validation using Zod to ensure data integrity.
+* **Error Tracking:** Integrated with Sentry for real-time, production-grade bug and performance monitoring.
+* **Responsive UI:** A beautifully crafted, accessible interface built with Tailwind CSS and Radix UI components.
+
+## 🛠 Tech Stack
+
+* **Framework:** Next.js (App Router, Server Actions, Server/Client Components)
+* **Language:** TypeScript
+* **Database:** MySQL
+* **ORM:** Prisma
+* **Styling & UI:** Tailwind CSS, Radix UI Primitives
+* **Authentication:** NextAuth.js
+* **Monitoring:** Sentry
+
+## ⚙️ Local Setup & Installation
+
+To run this project locally, you will need **Node.js** and a **MySQL** database instance.
+
+### 1. Clone the repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
+git clone [https://github.com/harshit-parmar07/issue-tracker.git](https://github.com/harshit-parmar07/issue-tracker.git)
+cd issue-tracker
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Install dependencies
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Setup Environment Variables
+Create a `.env` file in the root directory and add the following keys. You will need to provide your own MySQL connection string and authentication secrets.
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+```env
+# Database connection string (MySQL)
+DATABASE_URL="mysql://USER:PASSWORD@HOST:PORT/DATABASE"
 
-## Learn More
+# NextAuth Configuration
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your_secure_random_string_here"
 
-To learn more about Next.js, take a look at the following resources:
+# OAuth Providers 
+GOOGLE_CLIENT_ID="your_google_client_id"
+GOOGLE_CLIENT_SECRET="your_google_client_secret"
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Sentry Configuration (For error tracking)
+NEXT_PUBLIC_SENTRY_DSN="your_sentry_dsn_here"
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+### 4. Database Setup
+Push the Prisma schema to your MySQL database to create the required tables:
+```bash
+npx prisma db push
+```
 
-## Deploy on Vercel
+### 5. Start the Development Server
+```bash
+npm run dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Your server should now be running locally on `http://localhost:3000`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## 🤝 Architecture Note
+This application utilizes **Next.js App Router**, taking heavy advantage of Server Components to minimize client-side JavaScript, resulting in fast page loads. The data access layer is handled securely on the server via Prisma ORM, providing a strictly typed database client that syncs perfectly with TypeScript interfaces.
