@@ -19,7 +19,7 @@ const IssuesPage = async ({ searchParams }: Props) => {
 
   const orderBy = columnNames.includes(searchParams.orderBy) ? { [searchParams.orderBy]: 'asc' } : undefined;
 
-  const page = parseInt(searchParams.page) || 1;
+  const page = Math.max(1, parseInt(searchParams.page) || 1);
   const pageSize = 10;
 
   const issues = await prisma.issue.findMany({
@@ -40,8 +40,6 @@ const IssuesPage = async ({ searchParams }: Props) => {
     </Flex>
   );
 };
-
-export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Issue Tracker - Issue List',

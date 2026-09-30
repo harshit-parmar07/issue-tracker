@@ -1,7 +1,12 @@
 import { PrismaClient } from '@prisma/client';
 
 const prismaClientSingleton = () => {
-  return new PrismaClient();
+  // In serverless environments, we restrict the connection pool to 1
+  // to prevent connection exhaustion on the external Aiven database.
+  // Make sure your DATABASE_URL includes ?connection_limit=1
+  return new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  });
 };
 
 type PrismaClientSingleton = ReturnType<typeof prismaClientSingleton>;
