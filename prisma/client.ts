@@ -1,9 +1,9 @@
 import { PrismaClient } from '@prisma/client';
 
 const prismaClientSingleton = () => {
-  // In serverless environments, we restrict the connection pool to 1
-  // to prevent connection exhaustion on the external Aiven database.
-  // Make sure your DATABASE_URL includes ?connection_limit=1
+  // In a persistent container environment (like Azure App Service), 
+  // connection pools can be managed more efficiently.
+  // We still use a singleton to prevent Next.js hot-reload connection exhaustion in dev.
   return new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   });
