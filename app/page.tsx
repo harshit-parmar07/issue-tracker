@@ -5,6 +5,8 @@ import IssueSummary from "./IssueSummary";
 import LatestIssues from "./LatestIssues";
 import { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const open = await prisma.issue.count({ where: { status: 'OPEN' } })
   const inProgress = await prisma.issue.count({ where: { status: 'IN_PROGRESS' } })
