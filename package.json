@@ -48,6 +48,6 @@
     "prisma": "5.22.0"
   },
   "engines": {
-    "node": "20.x"
+    "node": "22.x"
   }
 }
