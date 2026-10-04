@@ -10,6 +10,8 @@ import AssigneeSelect from './AssigneeSelect'
 import { title } from 'process'
 import { cache } from 'react'
 
+export const dynamic = 'force-dynamic';
+
 interface Props {
     params: { id: string }
 }

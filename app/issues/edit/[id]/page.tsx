@@ -1,9 +1,8 @@
-'use-client';
 import React from 'react'
 import prisma from '@/prisma/client'
+
+export const dynamic = 'force-dynamic';
 import { notFound } from 'next/navigation'
-import dynamic from 'next/dynamic';
-import IssueFormSkeleton from './loading';
 import IssueForm from '../../_components/IssueForm';
 
 interface Props {
