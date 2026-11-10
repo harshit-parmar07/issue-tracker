@@ -1,24 +1,25 @@
-import React from 'react'
-import prisma from '@/prisma/client'
+import React from 'react';
+import prisma from '@/prisma/client';
+import { notFound } from 'next/navigation';
+import EditIssueForm from '../../_components/EditIssueForm';
 
 export const dynamic = 'force-dynamic';
-import { notFound } from 'next/navigation'
-import IssueForm from '../../_components/IssueForm';
 
 interface Props {
-    params: { id: string }
+  params: { id: string };
 }
 
 const EditIssuePage = async ({ params }: Props) => {
-    const issue = await prisma.issue.findUnique({
-        where: { id: parseInt(params.id) }
-    });
+  const issueId = parseInt(params.id, 10);
+  if (isNaN(issueId)) notFound();
 
-    if (!issue) notFound();
+  const issue = await prisma.issue.findUnique({
+    where: { id: issueId }
+  });
 
-    return (
-        <IssueForm issue={issue} />
-    )
-}
+  if (!issue) notFound();
 
-export default EditIssuePage
+  return <EditIssueForm issue={issue} />;
+};
+
+export default EditIssuePage;
