@@ -24,6 +24,13 @@ export async function PATCH(
     return NextResponse.json(validation.error.format(), { status: 400 });
   }
 
+  const currentUser = await prisma.user.findUnique({
+    where: { email: session.user!.email! }
+  });
+  if (!currentUser) {
+    return NextResponse.json({ error: 'User not found' }, { status: 401 });
+  }
+
   const { title, description, status, assignedToUserId } = validation.data;
 
   if (assignedToUserId) {
@@ -42,15 +49,56 @@ export async function PATCH(
     return NextResponse.json({ error: 'Issue not found.' }, { status: 404 });
   }
 
-  const updatedIssue = await prisma.issue.update({
-    where: { id: issue.id },
-    data: {
-      title,
-      description,
-      status,
-      assignedToUserId
-    }
-  });
+  const activitiesToCreate = [];
+
+  if (status && status !== issue.status) {
+    activitiesToCreate.push(
+      prisma.issueActivity.create({
+        data: {
+          type: 'STATUS_CHANGE',
+          description: `changed status from ${issue.status} to ${status}`,
+          oldValue: issue.status,
+          newValue: status,
+          issueId,
+          userId: currentUser.id
+        }
+      })
+    );
+  }
+
+  if (
+    assignedToUserId !== undefined &&
+    assignedToUserId !== issue.assignedToUserId
+  ) {
+    const newUser = assignedToUserId
+      ? await prisma.user.findUnique({
+          where: { id: assignedToUserId }
+        })
+      : null;
+
+    activitiesToCreate.push(
+      prisma.issueActivity.create({
+        data: {
+          type: 'ASSIGNEE_CHANGE',
+          description: newUser
+            ? `assigned to ${newUser.name}`
+            : 'unassigned the issue',
+          oldValue: issue.assignedToUserId ?? undefined,
+          newValue: assignedToUserId ?? undefined,
+          issueId,
+          userId: currentUser.id
+        }
+      })
+    );
+  }
+
+  const [updatedIssue] = await prisma.$transaction([
+    prisma.issue.update({
+      where: { id: issue.id },
+      data: { title, description, status, assignedToUserId }
+    }),
+    ...activitiesToCreate
+  ]);
 
   return NextResponse.json(updatedIssue);
 }

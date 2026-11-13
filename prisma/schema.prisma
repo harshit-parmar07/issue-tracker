@@ -17,7 +17,9 @@ model Issue {
   updatedAt        DateTime @updatedAt
   userId           String?
   assignedToUserId String?  @db.VarChar(255)
-  assignedToUser   User?    @relation(fields: [assignedToUserId], references: [id])
+  assignedToUser   User?           @relation(fields: [assignedToUserId], references: [id])
+  comments         Comment[]
+  activities       IssueActivity[]
 
   @@index([status])
   @@index([assignedToUserId])
@@ -63,6 +65,8 @@ model User {
   accounts      Account[]
   assignedIssue Issue[]
   sessions      Session[]
+  comments      Comment[]
+  activities    IssueActivity[]
 }
 
 model VerificationToken {
@@ -78,4 +82,42 @@ enum Status {
   OPEN
   IN_PROGRESS
   CLOSED
+}
+
+enum ActivityType {
+  STATUS_CHANGE
+  ASSIGNEE_CHANGE
+  TITLE_CHANGE
+  COMMENT_ADDED
+  ISSUE_CREATED
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  text      String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  issueId   Int
+  issue     Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  userId    String   @db.VarChar(255)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([issueId])
+  @@index([createdAt])
+}
+
+model IssueActivity {
+  id          Int          @id @default(autoincrement())
+  type        ActivityType
+  description String       @db.VarChar(255)
+  oldValue    String?      @db.VarChar(255)
+  newValue    String?      @db.VarChar(255)
+  createdAt   DateTime     @default(now())
+  issueId     Int
+  issue       Issue        @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  userId      String       @db.VarChar(255)
+  user        User         @relation(fields: [userId], references: [id])
+
+  @@index([issueId])
+  @@index([createdAt])
 }

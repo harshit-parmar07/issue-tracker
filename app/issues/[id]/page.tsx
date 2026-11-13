@@ -8,6 +8,7 @@ import AssigneeSelect from './AssigneeSelect';
 import DeleteIssueButton from './DeleteIssueButton';
 import EditIssueButton from './EditIssueButton';
 import IssueDetails from './IssueDetails';
+import ActivityTimeline from './ActivityTimeline';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,7 @@ const IssueDetailPage = async ({ params }: Props) => {
     <Grid columns={{ initial: '1', sm: '5' }} gap="5">
       <Box className="md:col-span-4">
         <IssueDetails issue={issue} />
+        <ActivityTimeline issueId={issue.id} />
       </Box>
       {session && (
         <Box>
