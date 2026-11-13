@@ -19,7 +19,10 @@ model Issue {
   assignedToUserId String?  @db.VarChar(255)
   assignedToUser   User?    @relation(fields: [assignedToUserId], references: [id])
 
-  @@index([assignedToUserId], map: "Issue_assignedToUserId_fkey")
+  @@index([status])
+  @@index([assignedToUserId])
+  @@index([createdAt])
+  @@index([status, assignedToUserId])
 }
 
 model Account {

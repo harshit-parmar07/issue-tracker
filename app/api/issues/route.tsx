@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     data: {
       title,
       description,
-      status: status || 'OPEN'
+      status: status ?? 'OPEN'
     }
   });
 

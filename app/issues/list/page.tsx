@@ -21,18 +21,24 @@ const IssuesPage = async ({ searchParams }: Props) => {
 
   const orderBy = columnNames.includes(searchParams.orderBy) ? { [searchParams.orderBy]: 'asc' } : undefined;
 
-  const page = Math.max(1, parseInt(searchParams.page) || 1);
+  // Parallel query execution with selective relational inclusion
+  const page = parseInt(searchParams.page) || 1;
   const pageSize = 10;
 
-  const issues = await prisma.issue.findMany({
-    where,
-    orderBy,
-    skip: (page - 1) * pageSize,
-    take: pageSize
-
-  });
-
-  const issueCount = await prisma.issue.count({ where })
+  const [issues, issueCount] = await Promise.all([
+    prisma.issue.findMany({
+      where,
+      orderBy,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        assignedToUser: {
+          select: { id: true, name: true, image: true }
+        }
+      }
+    }),
+    prisma.issue.count({ where })
+  ]);
   // await delay(2000)
   return (
     <Flex direction='column' gap='3'>

@@ -3,14 +3,15 @@ import { patchIssueSchema } from '@/app/validationSchemas';
 import prisma from '@/prisma/client';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({}, { status: 401 });
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   const issueId = parseInt(params.id, 10);
   if (isNaN(issueId)) {
@@ -23,36 +24,35 @@ export async function PATCH(
     return NextResponse.json(validation.error.format(), { status: 400 });
   }
 
-  const { assignedToUserId, title, description, status } = validation.data;
+  const { title, description, status, assignedToUserId } = validation.data;
 
-  try {
-    const updatedIssue = await prisma.issue.update({
-      where: { id: issueId },
-      data: {
-        title,
-        description,
-        assignedToUserId,
-        status
-      }
+  if (assignedToUserId) {
+    const user = await prisma.user.findUnique({
+      where: { id: assignedToUserId }
     });
-
-    revalidatePath('/issues/list');
-    revalidatePath(`/issues/${issueId}`);
-    revalidatePath('/');
-
-    return NextResponse.json(updatedIssue);
-  } catch (error: any) {
-    if (error.code === 'P2025') {
-      return NextResponse.json({ error: 'Invalid issue' }, { status: 404 });
+    if (!user) {
+      return NextResponse.json({ error: 'Invalid user.' }, { status: 400 });
     }
-    if (error.code === 'P2003') {
-      return NextResponse.json({ error: 'Invalid user' }, { status: 400 });
-    }
-    return NextResponse.json(
-      { error: 'Internal Server Error' },
-      { status: 500 }
-    );
   }
+
+  const issue = await prisma.issue.findUnique({
+    where: { id: issueId }
+  });
+  if (!issue) {
+    return NextResponse.json({ error: 'Issue not found.' }, { status: 404 });
+  }
+
+  const updatedIssue = await prisma.issue.update({
+    where: { id: issue.id },
+    data: {
+      title,
+      description,
+      status,
+      assignedToUserId
+    }
+  });
+
+  return NextResponse.json(updatedIssue);
 }
 
 export async function DELETE(
@@ -60,7 +60,9 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({}, { status: 401 });
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   const issueId = parseInt(params.id, 10);
   if (isNaN(issueId)) {
@@ -72,15 +74,12 @@ export async function DELETE(
   });
 
   if (!issue) {
-    return NextResponse.json({ error: 'Invalid Issue' }, { status: 404 });
+    return NextResponse.json({ error: 'Issue not found' }, { status: 404 });
   }
 
   await prisma.issue.delete({
-    where: { id: issue.id }
+    where: { id: issueId }
   });
 
-  revalidatePath('/issues/list');
-  revalidatePath('/');
-
-  return NextResponse.json({});
+  return NextResponse.json({ message: 'Issue deleted successfully' });
 }

@@ -1,7 +1,7 @@
 import React from 'react';
 import prisma from '@/prisma/client';
 import { notFound } from 'next/navigation';
-import EditIssueForm from '../../_components/EditIssueForm';
+import IssueForm from '../../_components/IssueForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +19,7 @@ const EditIssuePage = async ({ params }: Props) => {
 
   if (!issue) notFound();
 
-  return <EditIssueForm issue={issue} />;
+  return <IssueForm issue={issue} />;
 };
 
 export default EditIssuePage;

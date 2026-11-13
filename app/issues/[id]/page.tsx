@@ -8,7 +8,6 @@ import AssigneeSelect from './AssigneeSelect';
 import DeleteIssueButton from './DeleteIssueButton';
 import EditIssueButton from './EditIssueButton';
 import IssueDetails from './IssueDetails';
-import StatusSelect from './StatusSelect';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +39,6 @@ const IssueDetailPage = async ({ params }: Props) => {
         <Box>
           <Flex direction="column" gap="4">
             <AssigneeSelect issue={issue} />
-            <StatusSelect issue={issue} />
             <EditIssueButton issueId={issue.id} />
             <DeleteIssueButton issueId={issue.id} />
           </Flex>
