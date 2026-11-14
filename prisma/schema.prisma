@@ -1,6 +1,7 @@
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch", "fullTextIndex"]
+  binaryTargets   = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -27,6 +28,7 @@ model Issue {
   @@index([assignedToUserId], map: "Issue_assignedToUserId_fkey")
   @@index([status, priority, createdAt])
   @@index([dueDate])
+  @@fulltext([title, description])
 }
 
 model Label {
