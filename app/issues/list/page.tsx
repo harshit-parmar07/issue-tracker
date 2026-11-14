@@ -1,28 +1,43 @@
 import Pagination from '@/app/components/Pagination';
 import prisma from '@/prisma/client';
-import { Status } from '@prisma/client';
-import IssueActions from './IssueActions';
-import IssueTable, { columnNames, IssueQuery } from './IssueTable';
+import { Priority, Status } from '@prisma/client';
 import { Flex } from '@radix-ui/themes';
 import { Metadata } from 'next';
+import IssueActions from './IssueActions';
+import IssueTable, {
+  columnNames,
+  IssueQuery
+} from './IssueTable';
 
 export const dynamic = 'force-dynamic';
 
 interface Props {
-  searchParams: IssueQuery
+  searchParams: IssueQuery;
 }
 
 const IssuesPage = async ({ searchParams }: Props) => {
-
-
   const statuses = Object.values(Status);
-  const status = statuses.includes(searchParams.status) ? searchParams.status : undefined;
-  const where = { status };
+  const status = statuses.includes(searchParams.status)
+    ? searchParams.status
+    : undefined;
 
-  const orderBy = columnNames.includes(searchParams.orderBy) ? { [searchParams.orderBy]: 'asc' } : undefined;
+  const priorities = Object.values(Priority);
+  const priority = priorities.includes(
+    searchParams.priority
+  )
+    ? searchParams.priority
+    : undefined;
 
-  // Parallel query execution with selective relational inclusion
-  const page = parseInt(searchParams.page) || 1;
+  const where = { status, priority };
+
+  const orderBy = columnNames.includes(searchParams.orderBy)
+    ? { [searchParams.orderBy]: 'asc' }
+    : undefined;
+
+  const page = Math.max(
+    1,
+    parseInt(searchParams.page) || 1
+  );
   const pageSize = 10;
 
   const [issues, issueCount] = await Promise.all([
@@ -32,19 +47,24 @@ const IssuesPage = async ({ searchParams }: Props) => {
       skip: (page - 1) * pageSize,
       take: pageSize,
       include: {
-        assignedToUser: {
-          select: { id: true, name: true, image: true }
-        }
+        labels: { include: { label: true } }
       }
     }),
     prisma.issue.count({ where })
   ]);
-  // await delay(2000)
+
   return (
-    <Flex direction='column' gap='3'>
+    <Flex direction="column" gap="3">
       <IssueActions />
-      <IssueTable searchParams={searchParams} issues={issues} />
-      <Pagination pageSize={pageSize} currentPage={page} itemCount={issueCount} />
+      <IssueTable
+        searchParams={searchParams}
+        issues={issues}
+      />
+      <Pagination
+        pageSize={pageSize}
+        currentPage={page}
+        itemCount={issueCount}
+      />
     </Flex>
   );
 };

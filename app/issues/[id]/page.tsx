@@ -4,11 +4,14 @@ import { Box, Flex, Grid } from '@radix-ui/themes';
 import { getServerSession } from 'next-auth';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
+import ActivityTimeline from './ActivityTimeline';
 import AssigneeSelect from './AssigneeSelect';
 import DeleteIssueButton from './DeleteIssueButton';
 import EditIssueButton from './EditIssueButton';
 import IssueDetails from './IssueDetails';
-import ActivityTimeline from './ActivityTimeline';
+import IssueLabelAndSlaControl from './IssueLabelAndSlaControl';
+import PrioritySelect from './PrioritySelect';
+import StatusSelect from './StatusSelect';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,8 +19,15 @@ interface Props {
   params: { id: string };
 }
 
-const fetchUser = cache((issueId: number) =>
-  prisma.issue.findUnique({ where: { id: issueId } })
+const fetchIssue = cache((issueId: number) =>
+  prisma.issue.findUnique({
+    where: { id: issueId },
+    include: {
+      labels: {
+        include: { label: true }
+      }
+    }
+  })
 );
 
 const IssueDetailPage = async ({ params }: Props) => {
@@ -25,7 +35,7 @@ const IssueDetailPage = async ({ params }: Props) => {
   if (isNaN(issueId)) notFound();
 
   const session = await getServerSession(authOptions);
-  const issue = await fetchUser(issueId);
+  const issue = await fetchIssue(issueId);
 
   if (!issue) {
     notFound();
@@ -41,6 +51,9 @@ const IssueDetailPage = async ({ params }: Props) => {
         <Box>
           <Flex direction="column" gap="4">
             <AssigneeSelect issue={issue} />
+            <StatusSelect issue={issue} />
+            <PrioritySelect issue={issue} />
+            <IssueLabelAndSlaControl issue={issue} />
             <EditIssueButton issueId={issue.id} />
             <DeleteIssueButton issueId={issue.id} />
           </Flex>
@@ -59,7 +72,7 @@ export async function generateMetadata({ params }: Props) {
     };
   }
 
-  const issue = await fetchUser(issueId);
+  const issue = await fetchIssue(issueId);
 
   return {
     title: issue?.title,

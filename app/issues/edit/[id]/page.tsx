@@ -1,7 +1,7 @@
 import React from 'react';
 import prisma from '@/prisma/client';
 import { notFound } from 'next/navigation';
-import IssueForm from '../../_components/IssueForm';
+import EditIssueForm from '../../_components/EditIssueForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,12 +14,13 @@ const EditIssuePage = async ({ params }: Props) => {
   if (isNaN(issueId)) notFound();
 
   const issue = await prisma.issue.findUnique({
-    where: { id: issueId }
+    where: { id: issueId },
+    include: { labels: { include: { label: true } } }
   });
 
   if (!issue) notFound();
 
-  return <IssueForm issue={issue} />;
+  return <EditIssueForm issue={issue} />;
 };
 
 export default EditIssuePage;

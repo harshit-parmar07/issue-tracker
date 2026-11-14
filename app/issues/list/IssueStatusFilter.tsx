@@ -1,43 +1,85 @@
 'use client';
-import type { Status } from '@prisma/client';
-import { Select } from '@radix-ui/themes';
-import { useRouter, useSearchParams } from 'next/navigation';
+import type { Priority, Status } from '@prisma/client';
+import { Flex, Select } from '@radix-ui/themes';
+import {
+  useRouter,
+  useSearchParams
+} from 'next/navigation';
 import React from 'react';
 
 const statuses: { label: string; value?: Status }[] = [
-  { label: 'All' },
+  { label: 'All Statuses' },
   { label: 'Open', value: 'OPEN' },
   { label: 'In Progress', value: 'IN_PROGRESS' },
   { label: 'Closed', value: 'CLOSED' }
+];
+
+const priorities: { label: string; value?: Priority }[] = [
+  { label: 'All Priorities' },
+  { label: 'Low', value: 'LOW' },
+  { label: 'Medium', value: 'MEDIUM' },
+  { label: 'High', value: 'HIGH' },
+  { label: 'Critical', value: 'CRITICAL' }
 ];
 
 const IssueStatusFilter = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  return (
-    <Select.Root
-      defaultValue={searchParams.get('status') || ''}
-      onValueChange={(status) => {
-        const params = new URLSearchParams();
-        if (status) params.append('status', status);
-        if (searchParams.get('orderBy')) {
-          params.append('orderBy', searchParams.get('orderBy')!);
-        }
+  const updateFilter = (key: string, value: string) => {
+    const params = new URLSearchParams(
+      searchParams.toString()
+    );
+    if (value && value !== 'ALL') {
+      params.set(key, value);
+    } else {
+      params.delete(key);
+    }
+    params.delete('page');
+    const query = params.size
+      ? '?' + params.toString()
+      : '';
+    router.push('/issues/list' + query);
+  };
 
-        const query = params.size ? '?' + params.toString() : '';
-        router.push('/issues/list' + query);
-      }}
-    >
-      <Select.Trigger />
-      <Select.Content>
-        {statuses.map((status) => (
-          <Select.Item key={status.value || 'ALL'} value={status.value || ''}>
-            {status.label}
-          </Select.Item>
-        ))}
-      </Select.Content>
-    </Select.Root>
+  return (
+    <Flex gap="3" wrap="wrap">
+      <Select.Root
+        defaultValue={searchParams.get('status') || 'ALL'}
+        onValueChange={(val) => updateFilter('status', val)}
+      >
+        <Select.Trigger />
+        <Select.Content>
+          {statuses.map((s) => (
+            <Select.Item
+              key={s.value || 'ALL'}
+              value={s.value || 'ALL'}
+            >
+              {s.label}
+            </Select.Item>
+          ))}
+        </Select.Content>
+      </Select.Root>
+
+      <Select.Root
+        defaultValue={searchParams.get('priority') || 'ALL'}
+        onValueChange={(val) =>
+          updateFilter('priority', val)
+        }
+      >
+        <Select.Trigger />
+        <Select.Content>
+          {priorities.map((p) => (
+            <Select.Item
+              key={p.value || 'ALL'}
+              value={p.value || 'ALL'}
+            >
+              {p.label}
+            </Select.Item>
+          ))}
+        </Select.Content>
+      </Select.Root>
+    </Flex>
   );
 };
 

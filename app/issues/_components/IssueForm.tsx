@@ -1,50 +1,75 @@
 'use client';
-
 import ErrorMessage from '@/app/components/ErrorMessage';
 import Spinner from '@/app/components/Spinner';
 import { issueSchema } from '@/app/validationSchemas';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { Issue, Status } from '@prisma/client';
+import type {
+  Issue,
+  IssueLabel,
+  Label,
+  Priority,
+  Status
+} from '@prisma/client';
 import {
   Badge,
+  Box,
   Button,
   Callout,
-  Card,
   Flex,
+  Select,
   Text,
   TextField
 } from '@radix-ui/themes';
+import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import 'easymde/dist/easymde.min.css';
-import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import SimpleMDE from 'react-simplemde-editor';
 import { z } from 'zod';
-
-const SimpleMDE = dynamic(() => import('react-simplemde-editor'), {
-  ssr: false
-});
 
 type IssueFormData = z.infer<typeof issueSchema>;
 
-const statusOptions: {
-  label: string;
-  value: Status;
-  color: 'red' | 'violet' | 'green';
-}[] = [
-  { label: 'Open', value: 'OPEN', color: 'red' },
-  { label: 'In Progress', value: 'IN_PROGRESS', color: 'violet' },
-  { label: 'Closed', value: 'CLOSED', color: 'green' }
+type IssueWithLabels = Issue & {
+  labels?: (IssueLabel & { label: Label })[];
+};
+
+const statuses: { label: string; value: Status }[] = [
+  { label: 'Open', value: 'OPEN' },
+  { label: 'In Progress', value: 'IN_PROGRESS' },
+  { label: 'Closed', value: 'CLOSED' }
 ];
 
-const IssueForm = ({ issue }: { issue?: Issue }) => {
+const priorities: { label: string; value: Priority }[] = [
+  { label: 'Low', value: 'LOW' },
+  { label: 'Medium', value: 'MEDIUM' },
+  { label: 'High', value: 'HIGH' },
+  { label: 'Critical', value: 'CRITICAL' }
+];
+
+const IssueForm = ({
+  issue
+}: {
+  issue?: IssueWithLabels;
+}) => {
   const router = useRouter();
   const [error, setError] = useState('');
   const [isSubmitting, setSubmitting] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<Status>(
-    issue?.status ?? 'OPEN'
-  );
+  const [selectedLabelIds, setSelectedLabelIds] = useState<
+    number[]
+  >(issue?.labels?.map((l) => l.labelId) || []);
+
+  const { data: labels } = useQuery<Label[]>({
+    queryKey: ['labels'],
+    queryFn: () =>
+      axios.get('/api/labels').then((res) => res.data),
+    staleTime: 60000
+  });
+
+  const defaultDueDate = issue?.dueDate
+    ? new Date(issue.dueDate).toISOString().split('T')[0]
+    : '';
 
   const {
     register,
@@ -54,26 +79,35 @@ const IssueForm = ({ issue }: { issue?: Issue }) => {
   } = useForm<IssueFormData>({
     resolver: zodResolver(issueSchema),
     defaultValues: {
-      title: issue?.title ?? '',
-      description: issue?.description ?? '',
-      status: issue?.status ?? 'OPEN'
+      title: issue?.title,
+      description: issue?.description,
+      status: issue?.status || 'OPEN',
+      priority: issue?.priority || 'MEDIUM',
+      dueDate: defaultDueDate
     }
   });
+
+  const toggleLabel = (id: number) => {
+    setSelectedLabelIds((prev) =>
+      prev.includes(id)
+        ? prev.filter((item) => item !== id)
+        : [...prev, id]
+    );
+  };
 
   const onSubmit = handleSubmit(async (data) => {
     try {
       setSubmitting(true);
       const payload = {
-        title: data.title,
-        description: data.description,
-        status: selectedStatus
+        ...data,
+        labelIds: selectedLabelIds
       };
-
-      if (issue) {
-        await axios.patch('/api/issues/' + issue.id, payload);
-      } else {
-        await axios.post('/api/issues', payload);
-      }
+      if (issue)
+        await axios.patch(
+          '/api/issues/' + issue.id,
+          payload
+        );
+      else await axios.post('/api/issues', payload);
 
       router.push('/issues/list');
       router.refresh();
@@ -100,53 +134,117 @@ const IssueForm = ({ issue }: { issue?: Issue }) => {
         </TextField.Root>
         <ErrorMessage>{errors.title?.message}</ErrorMessage>
 
-        <Card variant="surface">
-          <Flex align="center" justify="between" wrap="wrap" gap="3">
-            <Flex align="center" gap="2">
-              <Text size="2" weight="bold">
-                Issue Status:
-              </Text>
-              <Badge
-                color={
-                  statusOptions.find((s) => s.value === selectedStatus)
-                    ?.color ?? 'red'
-                }
-              >
-                {
-                  statusOptions.find((s) => s.value === selectedStatus)
-                    ?.label
-                }
-              </Badge>
-            </Flex>
+        <Flex gap="4" wrap="wrap" align="center">
+          <Flex align="center" gap="2">
+            <Text size="2" weight="medium">
+              Status:
+            </Text>
+            <Controller
+              name="status"
+              control={control}
+              render={({ field }) => (
+                <Select.Root
+                  value={field.value || 'OPEN'}
+                  onValueChange={field.onChange}
+                >
+                  <Select.Trigger />
+                  <Select.Content>
+                    {statuses.map((s) => (
+                      <Select.Item
+                        key={s.value}
+                        value={s.value}
+                      >
+                        {s.label}
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select.Root>
+              )}
+            />
+          </Flex>
+
+          <Flex align="center" gap="2">
+            <Text size="2" weight="medium">
+              Priority:
+            </Text>
+            <Controller
+              name="priority"
+              control={control}
+              render={({ field }) => (
+                <Select.Root
+                  value={field.value || 'MEDIUM'}
+                  onValueChange={field.onChange}
+                >
+                  <Select.Trigger />
+                  <Select.Content>
+                    {priorities.map((p) => (
+                      <Select.Item
+                        key={p.value}
+                        value={p.value}
+                      >
+                        {p.label}
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select.Root>
+              )}
+            />
+          </Flex>
+
+          <Flex align="center" gap="2">
+            <Text size="2" weight="medium">
+              SLA Due:
+            </Text>
+            <input
+              type="date"
+              defaultValue={defaultDueDate}
+              {...register('dueDate')}
+              className="rounded border border-zinc-300 px-2 py-1 text-sm"
+            />
+          </Flex>
+        </Flex>
+
+        {labels && labels.length > 0 && (
+          <Box>
+            <Text size="2" weight="medium" as="p" mb="1">
+              Labels:
+            </Text>
             <Flex gap="2" wrap="wrap">
-              {statusOptions.map((option) => {
-                const isActive = selectedStatus === option.value;
+              {labels.map((label) => {
+                const isSelected =
+                  selectedLabelIds.includes(label.id);
                 return (
-                  <Button
-                    key={option.value}
-                    type="button"
-                    size="1"
-                    color={option.color}
-                    variant={isActive ? 'solid' : 'soft'}
-                    onClick={() => setSelectedStatus(option.value)}
+                  <Badge
+                    key={label.id}
+                    color={(label.color as any) || 'indigo'}
+                    variant={
+                      isSelected ? 'solid' : 'outline'
+                    }
+                    className="cursor-pointer select-none"
+                    onClick={() => toggleLabel(label.id)}
                   >
-                    {option.label}
-                  </Button>
+                    {label.name}
+                  </Badge>
                 );
               })}
             </Flex>
-          </Flex>
-        </Card>
+          </Box>
+        )}
 
         <Controller
           name="description"
           control={control}
           defaultValue={issue?.description}
           render={({ field }) => (
-            <SimpleMDE placeholder="Description" {...field} />
+            <SimpleMDE
+              placeholder="Description"
+              {...field}
+            />
           )}
         />
-        <ErrorMessage>{errors.description?.message}</ErrorMessage>
+        <ErrorMessage>
+          {errors.description?.message}
+        </ErrorMessage>
 
         <Button disabled={isSubmitting}>
           {issue ? 'Update Issue' : 'Submit New Issue'}{' '}
